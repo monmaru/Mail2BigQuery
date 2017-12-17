@@ -1,24 +1,24 @@
-﻿using System.Linq;
+﻿using MailKit.Search;
+using System;
+using System.Linq;
 
 namespace Mail2BigQuery
 {
     internal class Program
     {
-        private static void Main()
+        public static void Main(string[] args)
         {
             var conf = Config.Load();
-            var pop3 = new Pop3Receiver(
+            var imap = new ImapReceiver(
                 host: conf.Host,
                 port: conf.Port,
                 userName: conf.UserName,
                 password: conf.Password);
-            var importer = new BigQueryImporter();
-
-            pop3.DownloadMessages()
-                .Where(message => message.Subject.StartsWith("Test"))
-                .Select(Model.Create)
-                .Buffer(100)
-                .ForEach(models => importer.Import(conf.ProjectId, conf.DatasetName, conf.TableName, models));
+            var bigQuery = new BigQueryImporter();
+            var yesterday = DateTime.Today.AddDays(-1);
+            var query = SearchQuery.SubjectContains("Test").And(SearchQuery.SentOn(yesterday));
+            var models = imap.DownloadMessages(query).Select(Model.Create);
+            bigQuery.Import(conf.ProjectId, conf.DatasetName, conf.TableName, models);
         }
     }
 }

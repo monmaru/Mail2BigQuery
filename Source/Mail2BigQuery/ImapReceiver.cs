@@ -1,14 +1,15 @@
 ﻿using MailKit;
-using MailKit.Net.Pop3;
+using MailKit.Net.Imap;
+using MailKit.Search;
 using MailKit.Security;
 using MimeKit;
 using System.Collections.Generic;
 
 namespace Mail2BigQuery
 {
-    internal class Pop3Receiver
+    internal class ImapReceiver
     {
-        internal Pop3Receiver(string host, int port, string userName, string password)
+        internal ImapReceiver(string host, int port, string userName, string password)
         {
             _host = host;
             _port = port;
@@ -21,16 +22,17 @@ namespace Mail2BigQuery
         private readonly string _userName;
         private readonly string _password;
 
-        internal IEnumerable<MimeMessage> DownloadMessages()
+        internal IEnumerable<MimeMessage> DownloadMessages(SearchQuery query)
         {
-            using (var client = new Pop3Client(new ProtocolLogger("pop3.log")))
+            using (var client = new ImapClient(new ProtocolLogger("imap.log")))
             {
                 client.Connect(_host, _port, SecureSocketOptions.SslOnConnect);
                 client.Authenticate(_userName, _password);
+                client.Inbox.Open(FolderAccess.ReadOnly);
 
-                for (var i = 0; i < client.Count; i++)
+                foreach (var uid in client.Inbox.Search(query))
                 {
-                    yield return client.GetMessage(i);
+                    yield return client.Inbox.GetMessage(uid);
                 }
 
                 client.Disconnect(true);

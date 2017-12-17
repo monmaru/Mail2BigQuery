@@ -115,6 +115,7 @@
     <Compile Include="BigQueryImporter.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="EnumerableExtensions.cs" />
+    <Compile Include="ImapReceiver.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="Pop3Receiver.cs" />
     <Compile Include="Program.cs" />
